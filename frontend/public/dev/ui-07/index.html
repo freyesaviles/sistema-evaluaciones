@@ -1,0 +1,600 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>UI-07 · Revisión FV</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --paper: #ffffff;
+        --canvas: #f2f2f2;
+        --line: #d9d9d9;
+        --ink: #111111;
+        --muted: #555555;
+        --teal: #019aa8;
+        --teal-dark: #006e7a;
+        --focus: #111111;
+        --warning: #f4f1d8;
+        --danger: #f5e5e5;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        background: var(--canvas);
+        color: var(--ink);
+        font-family: Georgia, 'Times New Roman', serif;
+        font-size: 16px;
+        line-height: 1.45;
+      }
+
+      button {
+        border: 0;
+        border-radius: 0;
+        cursor: pointer;
+        font: inherit;
+      }
+
+      button:focus-visible,
+      [tabindex]:focus-visible {
+        outline: 3px solid var(--focus);
+        outline-offset: 3px;
+      }
+
+      .shell {
+        width: min(1100px, calc(100% - 32px));
+        margin: 32px auto;
+      }
+
+      .masthead,
+      .workspace,
+      .footer-note {
+        border: 1px solid var(--ink);
+        background: var(--paper);
+      }
+
+      .masthead {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 24px;
+        padding: 24px 28px;
+      }
+
+      .eyebrow {
+        margin: 0 0 4px;
+        color: var(--teal-dark);
+        font-size: 0.9rem;
+        letter-spacing: 0.06em;
+      }
+
+      h1,
+      h2,
+      h3,
+      p {
+        margin-top: 0;
+      }
+
+      h1 {
+        margin-bottom: 8px;
+        font-size: clamp(1.8rem, 4vw, 2.8rem);
+        font-weight: 400;
+      }
+
+      .lede {
+        max-width: 62ch;
+        margin-bottom: 0;
+        color: var(--muted);
+      }
+
+      .provisional {
+        min-width: 152px;
+        border: 1px solid var(--teal-dark);
+        color: var(--teal-dark);
+        padding: 10px 12px;
+        text-align: center;
+      }
+
+      .provisional strong {
+        display: block;
+        font-size: 1.05rem;
+        font-weight: 400;
+      }
+
+      .provisional span,
+      .mono {
+        font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', monospace;
+        font-size: 0.78rem;
+      }
+
+      .workspace {
+        display: grid;
+        grid-template-columns: 220px 1fr;
+        margin-top: 18px;
+      }
+
+      .sidebar {
+        border-right: 1px solid var(--line);
+        padding: 20px;
+      }
+
+      .sidebar h2 {
+        margin-bottom: 14px;
+        font-size: 1.15rem;
+        font-weight: 400;
+      }
+
+      .tabs {
+        display: grid;
+        gap: 8px;
+      }
+
+      .tab {
+        width: 100%;
+        border: 1px solid var(--line);
+        background: var(--paper);
+        padding: 11px 12px;
+        color: var(--ink);
+        text-align: left;
+      }
+
+      .tab[aria-selected='true'] {
+        border-color: var(--teal-dark);
+        background: var(--teal-dark);
+        color: var(--paper);
+      }
+
+      .main {
+        min-width: 0;
+        padding: 24px 28px 28px;
+      }
+
+      .section-heading {
+        display: flex;
+        justify-content: space-between;
+        gap: 16px;
+        border-bottom: 1px solid var(--line);
+        padding-bottom: 14px;
+      }
+
+      .section-heading h2 {
+        margin-bottom: 4px;
+        font-size: 1.65rem;
+        font-weight: 400;
+      }
+
+      .section-heading p {
+        margin-bottom: 0;
+        color: var(--muted);
+      }
+
+      .status {
+        align-self: start;
+        border: 1px solid var(--teal-dark);
+        padding: 6px 10px;
+        color: var(--teal-dark);
+        white-space: nowrap;
+      }
+
+      .grid {
+        display: grid;
+        grid-template-columns: minmax(0, 1.4fr) minmax(220px, 0.8fr);
+        gap: 18px;
+        margin-top: 22px;
+      }
+
+      .panel {
+        border: 1px solid var(--line);
+        padding: 18px;
+      }
+
+      .panel h3 {
+        margin-bottom: 12px;
+        font-size: 1.1rem;
+        font-weight: 400;
+      }
+
+      .record {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 6px 18px;
+        border-bottom: 1px solid var(--line);
+        padding: 10px 0;
+      }
+
+      .record:first-of-type {
+        padding-top: 0;
+      }
+
+      .record:last-child {
+        border-bottom: 0;
+        padding-bottom: 0;
+      }
+
+      .record dt {
+        color: var(--muted);
+      }
+
+      .record dd {
+        margin: 0;
+        text-align: right;
+      }
+
+      .decision {
+        margin: 18px 0;
+        border-left: 4px solid var(--teal);
+        background: #f7fbfb;
+        padding: 14px 16px;
+      }
+
+      .decision p:last-child {
+        margin-bottom: 0;
+      }
+
+      .actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 20px;
+      }
+
+      .primary,
+      .secondary {
+        padding: 11px 16px;
+      }
+
+      .primary {
+        background: var(--teal-dark);
+        color: var(--paper);
+      }
+
+      .secondary {
+        border: 1px solid var(--ink);
+        background: var(--paper);
+        color: var(--ink);
+      }
+
+      .notice {
+        margin-top: 18px;
+        border: 2px solid var(--ink);
+        padding: 12px 14px;
+      }
+
+      .notice[data-tone='warning'] {
+        background: var(--warning);
+      }
+
+      .notice[data-tone='error'] {
+        background: var(--danger);
+      }
+
+      .notice strong {
+        display: block;
+        margin-bottom: 4px;
+      }
+
+      .hidden {
+        display: none;
+      }
+
+      .footer-note {
+        margin-top: 18px;
+        padding: 14px 18px;
+        color: var(--muted);
+        font-size: 0.92rem;
+      }
+
+      @media (max-width: 760px) {
+        .masthead,
+        .section-heading {
+          flex-direction: column;
+        }
+
+        .workspace,
+        .grid {
+          grid-template-columns: 1fr;
+        }
+
+        .sidebar {
+          border-right: 0;
+          border-bottom: 1px solid var(--line);
+        }
+
+        .tabs {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        *,
+        *::before,
+        *::after {
+          scroll-behavior: auto !important;
+          transition-duration: 0.01ms !important;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="shell">
+      <header class="masthead">
+        <div>
+          <p class="eyebrow">BFA · Fluidez Verbal</p>
+          <h1>Revisión de una calificación</h1>
+          <p class="lede">
+            Prototipo local para explorar decisiones, historial y publicación autorizada sin
+            conectar todavía el flujo al backend.
+          </p>
+        </div>
+        <div class="provisional" aria-label="Estado del prototipo">
+          <strong>Provisional</strong>
+          <span>UI-07 · sin API</span>
+        </div>
+      </header>
+
+      <section class="workspace" aria-label="Prototipo de revisión FV">
+        <aside class="sidebar">
+          <h2>Recorrido</h2>
+          <nav class="tabs" aria-label="Vistas de revisión" role="tablist">
+            <button
+              class="tab"
+              type="button"
+              role="tab"
+              aria-selected="true"
+              aria-controls="decision"
+              data-view="decision"
+            >
+              1. Decisión FV
+            </button>
+            <button
+              class="tab"
+              type="button"
+              role="tab"
+              aria-selected="false"
+              aria-controls="history"
+              data-view="history"
+            >
+              2. Historial
+            </button>
+            <button
+              class="tab"
+              type="button"
+              role="tab"
+              aria-selected="false"
+              aria-controls="recalculate"
+              data-view="recalculate"
+            >
+              3. Recálculo
+            </button>
+            <button
+              class="tab"
+              type="button"
+              role="tab"
+              aria-selected="false"
+              aria-controls="publish"
+              data-view="publish"
+            >
+              4. Publicación
+            </button>
+          </nav>
+        </aside>
+
+        <main class="main">
+          <section id="decision" role="tabpanel" aria-labelledby="decision-tab">
+            <div class="section-heading">
+              <div>
+                <h2>Decisión sobre una palabra</h2>
+                <p>Registrar la decisión sin alterar una revisión completada.</p>
+              </div>
+              <span class="status">Pendiente</span>
+            </div>
+            <div class="grid">
+              <article class="panel">
+                <h3>Elemento en revisión</h3>
+                <dl>
+                  <div class="record">
+                    <dt>Identificador</dt>
+                    <dd class="mono">FV-EJEMPLO-001</dd>
+                  </div>
+                  <div class="record">
+                    <dt>Contenido</dt>
+                    <dd>Ejemplo sintético</dd>
+                  </div>
+                  <div class="record">
+                    <dt>Revisión</dt>
+                    <dd class="mono">rev-provisional-02</dd>
+                  </div>
+                  <div class="record">
+                    <dt>Estado</dt>
+                    <dd>Pendiente</dd>
+                  </div>
+                </dl>
+                <div class="decision">
+                  <strong>Decisión propuesta</strong>
+                  <p>Validar como respuesta conforme al criterio vigente.</p>
+                  <p class="mono">Origen: revisión humana · motivo requerido</p>
+                </div>
+                <div class="actions">
+                  <button class="primary" type="button" data-action="decision">
+                    Guardar decisión
+                  </button>
+                  <button class="secondary" type="button" data-action="pending">
+                    Dejar pendiente
+                  </button>
+                </div>
+                <div
+                  class="notice hidden"
+                  data-tone="error"
+                  data-feedback="decision"
+                  role="status"
+                  aria-live="polite"
+                >
+                  <strong>La decisión necesita un motivo</strong>
+                  Completa la justificación antes de guardar. Este prototipo no envía datos.
+                </div>
+              </article>
+              <aside class="panel">
+                <h3>Regla visible</h3>
+                <p>Una revisión completada no se modifica directamente.</p>
+                <p>Las decisiones nuevas deben quedar asociadas a otra revisión.</p>
+              </aside>
+            </div>
+          </section>
+
+          <section id="history" class="hidden" role="tabpanel">
+            <div class="section-heading">
+              <div>
+                <h2>Historial de revisiones</h2>
+                <p>Conservar qué cambió, cuándo y quién lo decidió.</p>
+              </div>
+              <span class="status">Trazable</span>
+            </div>
+            <div class="grid">
+              <article class="panel">
+                <h3>Versiones conservadas</h3>
+                <dl>
+                  <div class="record">
+                    <dt class="mono">rev-provisional-01</dt>
+                    <dd>Publicada</dd>
+                  </div>
+                  <div class="record">
+                    <dt class="mono">rev-provisional-02</dt>
+                    <dd>En revisión</dd>
+                  </div>
+                  <div class="record">
+                    <dt class="mono">rev-provisional-03</dt>
+                    <dd>No creada</dd>
+                  </div>
+                </dl>
+              </article>
+              <aside class="panel">
+                <h3>Auditoría</h3>
+                <p>Actor, motivo, fecha y revisión anterior/nueva deben quedar visibles.</p>
+              </aside>
+            </div>
+          </section>
+
+          <section id="recalculate" class="hidden" role="tabpanel">
+            <div class="section-heading">
+              <div>
+                <h2>Preparar recálculo</h2>
+                <p>Crear una revisión nueva sin cambiar la vigente automáticamente.</p>
+              </div>
+              <span class="status">Requiere autorización</span>
+            </div>
+            <div class="grid">
+              <article class="panel">
+                <h3>Confirmación</h3>
+                <p>Se conservarán las entradas congeladas y el historial anterior.</p>
+                <div class="notice" data-tone="warning" role="note">
+                  <strong>La revisión vigente no cambiará</strong>
+                  Publicar es una decisión posterior y separada.
+                </div>
+                <div class="actions">
+                  <button class="primary" type="button" data-action="recalculate">
+                    Crear revisión
+                  </button>
+                </div>
+                <div
+                  class="notice hidden"
+                  data-tone="error"
+                  data-feedback="recalculate"
+                  role="status"
+                  aria-live="polite"
+                >
+                  <strong>No se pudo preparar el recálculo</strong>
+                  Falta confirmar autorización o motivo. Este prototipo solo muestra el estado.
+                </div>
+              </article>
+              <aside class="panel">
+                <h3>Dependencias pendientes</h3>
+                <p>Los roles y permisos siguen sujetos a aprobación documental.</p>
+              </aside>
+            </div>
+          </section>
+
+          <section id="publish" class="hidden" role="tabpanel">
+            <div class="section-heading">
+              <div>
+                <h2>Publicar revisión vigente</h2>
+                <p>Separar la publicación de la revisión y exigir confirmación explícita.</p>
+              </div>
+              <span class="status">No disponible</span>
+            </div>
+            <div class="grid">
+              <article class="panel">
+                <h3>Condiciones de publicación</h3>
+                <dl>
+                  <div class="record">
+                    <dt>Evaluación</dt>
+                    <dd>Finalizada</dd>
+                  </div>
+                  <div class="record">
+                    <dt>Revisión</dt>
+                    <dd>Completada y validada</dd>
+                  </div>
+                  <div class="record">
+                    <dt>Permiso</dt>
+                    <dd>Pendiente de ratificación</dd>
+                  </div>
+                  <div class="record">
+                    <dt>Auditoría</dt>
+                    <dd>Obligatoria</dd>
+                  </div>
+                </dl>
+                <div class="notice" data-tone="error" role="alert">
+                  <strong>Publicación bloqueada</strong>
+                  No se puede publicar hasta confirmar estado y permiso.
+                </div>
+                <div class="actions">
+                  <button class="primary" type="button" data-action="publish" disabled>
+                    Publicar revisión
+                  </button>
+                </div>
+              </article>
+              <aside class="panel">
+                <h3>Protección del historial</h3>
+                <p>Ante un conflicto, se conserva la referencia vigente anterior.</p>
+              </aside>
+            </div>
+          </section>
+        </main>
+      </section>
+
+      <p class="footer-note">
+        Alcance del prototipo: exploración visual de UI-07 con datos sintéticos. No representa
+        contratos API ni permisos aprobados.
+      </p>
+    </div>
+
+    <script>
+      const tabs = [...document.querySelectorAll('[data-view]')];
+      const panels = [...document.querySelectorAll('[role="tabpanel"]')];
+
+      function showView(view) {
+        tabs.forEach((tab) => {
+          const selected = tab.dataset.view === view;
+          tab.setAttribute('aria-selected', String(selected));
+        });
+        panels.forEach((panel) => {
+          panel.classList.toggle('hidden', panel.id !== view);
+        });
+      }
+
+      tabs.forEach((tab) => {
+        tab.addEventListener('click', () => showView(tab.dataset.view));
+      });
+
+      document.querySelectorAll('[data-action]').forEach((button) => {
+        button.addEventListener('click', () => {
+          const feedback = document.querySelector(`[data-feedback="${button.dataset.action}"]`);
+          if (feedback) feedback.classList.remove('hidden');
+        });
+      });
+    </script>
+  </body>
+</html>
