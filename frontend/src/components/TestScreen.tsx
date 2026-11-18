@@ -6,8 +6,12 @@ import { TextResponseField } from './TextResponseField';
 
 export type TestPhase = 'instructions' | 'practice' | 'active' | 'closed';
 export type TestResponseType = 'selection' | 'text';
+/** Distribución de las alternativas: lista, rejilla de dos columnas, par binario o figuras. */
+export type OptionsLayout = 'list' | 'compact' | 'binary' | 'figures';
+/** Enunciado: título breve, texto largo, pieza centrada (palabra, operación) u oculto a la vista. */
+export type PromptVariant = 'title' | 'statement' | 'display' | 'hidden';
 
-type TestScreenProps = {
+export type TestScreenProps = {
   testName: string;
   questionNumber: number;
   totalQuestions: number;
@@ -24,10 +28,22 @@ type TestScreenProps = {
   phaseDescription?: string;
   questionResource?: ReactNode;
   primaryActionLabel?: string;
-  onSelect: (optionId: string) => void;
+  /** Sustituye el texto "Pregunta X de Y" (numeración de la hoja, total desconocido...). */
+  questionLabel?: string;
+  promptVariant?: PromptVariant;
+  optionsLayout?: OptionsLayout;
+  /** Cifras de altura uniforme y alineadas, para operaciones y resultados. */
+  numeric?: boolean;
+  /** Reemplaza el área de respuesta (por ejemplo, la grilla de Fluidez Verbal). */
+  responseArea?: ReactNode;
+  previousActionLabel?: string;
+  onPrevious?: () => void;
+  onSelect?: (optionId: string) => void;
   onTextResponse?: (value: string) => void;
   onNext: () => void;
 };
+
+const noop = () => undefined;
 
 function formatRemainingTime(seconds: number | null) {
   if (seconds === null) return '—';
@@ -39,7 +55,10 @@ function formatRemainingTime(seconds: number | null) {
   return `${String(minutes).padStart(2, '0')}:${String(remainingSeconds).padStart(2, '0')}`;
 }
 
-const phaseDefaults: Record<Exclude<TestPhase, 'active'>, { label: string; title: string; description: string }> = {
+const phaseDefaults: Record<
+  Exclude<TestPhase, 'active'>,
+  { label: string; title: string; description: string }
+> = {
   instructions: {
     label: 'Instrucciones',
     title: 'Instrucciones de ejemplo',
@@ -74,7 +93,14 @@ export function TestScreen({
   phaseDescription,
   questionResource,
   primaryActionLabel,
-  onSelect,
+  questionLabel,
+  promptVariant = 'title',
+  optionsLayout = 'list',
+  numeric = false,
+  responseArea,
+  previousActionLabel,
+  onPrevious,
+  onSelect = noop,
   onTextResponse,
   onNext,
 }: TestScreenProps) {
@@ -82,14 +108,21 @@ export function TestScreen({
   const isActiveQuestion = phase === 'active';
   const phaseCopy = phase === 'active' ? null : phaseDefaults[phase];
   const timerValue = formatRemainingTime(timeRemainingSeconds);
-  const timerSeconds = timeRemainingSeconds === null ? undefined : Math.max(0, timeRemainingSeconds);
+  const timerSeconds =
+    timeRemainingSeconds === null ? undefined : Math.max(0, timeRemainingSeconds);
   const sectionHeadingId = isActiveQuestion ? headingId : `${headingId}-phase`;
 
   return (
-    <section className="test-paper" aria-labelledby={sectionHeadingId}>
+    <section
+      className={`test-paper${numeric ? ' test-paper--numeric' : ''}`}
+      aria-labelledby={sectionHeadingId}
+    >
       <header className="test-header">
         <span className="test-name">{testName}</span>
-        <time className="test-timer" dateTime={timerSeconds === undefined ? undefined : `PT${timerSeconds}S`}>
+        <time
+          className="test-timer"
+          dateTime={timerSeconds === undefined ? undefined : `PT${timerSeconds}S`}
+        >
           {timerValue}
         </time>
       </header>
@@ -98,29 +131,42 @@ export function TestScreen({
         {isActiveQuestion ? (
           <>
             <p className="question-counter">
-              Pregunta {questionNumber} de {totalQuestions}
+              {questionLabel ?? `Pregunta ${questionNumber} de ${totalQuestions}`}
             </p>
-            <h1 className="question-prompt" id={headingId}>
+            <h1
+              className={`question-prompt${promptVariant === 'title' ? '' : ` question-prompt--${promptVariant}`}`}
+              id={headingId}
+            >
               {prompt}
             </h1>
 
             {questionResource && <div className="question-resource">{questionResource}</div>}
             {notice && <TestNotice {...notice} />}
 
-            {responseType === 'selection' ? (
-              <div className="options" role="radiogroup" aria-label="Alternativas de respuesta">
+            {responseArea ? (
+              responseArea
+            ) : responseType === 'selection' ? (
+              <div
+                className={`options options--${optionsLayout}`}
+                role="radiogroup"
+                aria-label="Alternativas de respuesta"
+              >
                 {options.map((option) => (
                   <AnswerOption
                     key={option.id}
                     groupName={`test-question-${headingId}`}
                     option={option}
                     checked={selectedOption === option.id}
+                    variant={optionsLayout === 'binary' ? 'binary' : 'row'}
                     onChange={onSelect}
                   />
                 ))}
               </div>
             ) : (
-              <TextResponseField value={textResponse} onChange={onTextResponse ?? (() => undefined)} />
+              <TextResponseField
+                value={textResponse}
+                onChange={onTextResponse ?? (() => undefined)}
+              />
             )}
           </>
         ) : (
@@ -137,9 +183,16 @@ export function TestScreen({
 
       <footer className="test-footer">
         <SaveStatus state={saveState} />
-        <button className="primary-action" type="button" onClick={onNext}>
-          {primaryActionLabel ?? (phase === 'closed' ? 'Continuar' : 'Siguiente')}
-        </button>
+        <div className="test-actions">
+          {onPrevious && (
+            <button className="secondary-action" type="button" onClick={onPrevious}>
+              {previousActionLabel ?? 'Anterior'}
+            </button>
+          )}
+          <button className="primary-action" type="button" onClick={onNext}>
+            {primaryActionLabel ?? (phase === 'closed' ? 'Continuar' : 'Siguiente')}
+          </button>
+        </div>
       </footer>
     </section>
   );
