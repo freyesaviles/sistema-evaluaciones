@@ -18,6 +18,7 @@ import com.universidad.tests.domain.model.Evaluacion;
 import com.universidad.tests.domain.model.Resultado;
 import com.universidad.tests.domain.model.bfa.RevisionPalabra;
 import com.universidad.tests.domain.model.bfa.RevisionResultado;
+import com.universidad.tests.domain.port.EventoAuditoriaPort;
 import com.universidad.tests.domain.port.PublicacionResultadoPort;
 import com.universidad.tests.domain.port.RespuestaFluidezPort;
 import com.universidad.tests.domain.repository.EvaluacionRepository;
@@ -83,8 +84,28 @@ class RevisionResultadoBfaServiceTest {
                         memoria,
                         memoria,
                         new RegistroAuditoria(
-                                (cuenta, tipo, entidad, id) ->
-                                        eventos.add(tipo + ":" + entidad + ":" + id)));
+                                new EventoAuditoriaPort() {
+                                    @Override
+                                    public void insertar(
+                                            long idCuenta, String tipo, String entidad, long idEntidad) {
+                                        registrarEvento(tipo, entidad, idEntidad);
+                                    }
+
+                                    @Override
+                                    public void insertar(
+                                            long idCuenta,
+                                            String tipo,
+                                            String entidad,
+                                            long idEntidad,
+                                            Long idEvaluacion) {
+                                        registrarEvento(tipo, entidad, idEntidad);
+                                    }
+
+                                    private void registrarEvento(
+                                            String tipo, String entidad, long idEntidad) {
+                                        eventos.add(tipo + ":" + entidad + ":" + idEntidad);
+                                    }
+                                }));
         memoria.revisiones.put(
                 1L,
                 new RevisionResultado(
